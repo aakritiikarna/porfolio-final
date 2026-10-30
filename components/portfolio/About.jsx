@@ -1,83 +1,41 @@
-'use client'
-
-import { motion } from 'framer-motion'
-import { Briefcase, GraduationCap, Trophy, FileText, Terminal } from 'lucide-react'
-
-import { Card, CardContent } from '@/components/ui/card'
 import SectionHead from './SectionHead'
-import { Stagger } from './Reveal'
-import { useMotion } from '@/lib/motion'
 
-function Highlight({ icon, title, sub }) {
-  return (
-    <div className="rounded-xl bg-white/5 border border-white/10 p-3 transition hover:border-violet-500/40 hover:bg-white/[0.07]">
-      <div className="flex items-center gap-2 text-violet-300">
-        {icon}
-        <span className="text-sm font-semibold text-white">{title}</span>
-      </div>
-      <div className="text-xs text-zinc-400 mt-0.5">{sub}</div>
-    </div>
-  )
-}
+// Facts come from the resume content already on the site.
+const FACTS = [
+  { label: 'Frontend Developer Intern', value: 'Sayathari Tech, Kathmandu' },
+  { label: 'B.Tech CSE, CGPA 7.3', value: 'Vel Tech University, Chennai' },
+  { label: 'Hackathon, Top 3', value: '24-hour event' },
+  { label: 'Research paper', value: 'ICEARS 2026' },
+]
 
 export default function About() {
-  const { item } = useMotion()
   return (
-    <section id="about" className="relative py-24">
-      <div className="mx-auto max-w-6xl px-4">
-        <SectionHead
-          kicker="About Me"
-          title="Early career developer"
-          subtitle="Clean, practical solutions and reliable software."
-        />
-        <Stagger className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-          <motion.div variants={item} className="min-w-0">
-            <Card className="glass border-white/10 h-full">
-              <CardContent className="p-7">
-                <p className="text-zinc-300 leading-relaxed">
-                  I&apos;m an early career developer who enjoys breaking down complex problems into clean, practical
-                  solutions and turning ideas into functional, reliable software.
-                </p>
-                <p className="mt-4 text-zinc-400 leading-relaxed">
-                  I hold a B.Tech in Computer Science and Engineering from{' '}
-                  <span className="text-violet-300">Vel Tech University, Chennai</span> (2022 – 2026), and worked as a
-                  Frontend Developer Intern at <span className="text-violet-300">Sayathari Tech</span> in Kathmandu. My
-                  projects span React, Node.js and Express, MongoDB, Django and Python.
-                </p>
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <Highlight icon={<Briefcase className="h-4 w-4" />} title="Frontend Intern" sub="Sayathari Tech" />
-                  <Highlight icon={<GraduationCap className="h-4 w-4" />} title="CGPA 7.3" sub="B.Tech CSE" />
-                  <Highlight icon={<Trophy className="h-4 w-4" />} title="Hackathon" sub="Top 3 · 24-hour event" />
-                  <Highlight icon={<FileText className="h-4 w-4" />} title="Research paper" sub="ICEARS 2026" />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+    <section id="about" className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6">
+        <SectionHead title="About" />
+        <div className="grid gap-10 md:grid-cols-2 md:gap-16">
+          <div className="max-w-prose space-y-4 leading-relaxed text-muted-foreground">
+            <p>
+              I like turning practical problems into software that is clear and dependable. My work covers React and
+              Next.js on the front end, Node.js, Express and Python on the back end, and databases such as MongoDB,
+              MySQL and PostgreSQL.
+            </p>
+            <p>
+              I completed a B.Tech in Computer Science and Engineering at Vel Tech University, Chennai (2022 – 2026) and
+              worked as a Frontend Developer Intern at Sayathari Tech in Kathmandu. I am interested in building digital
+              solutions people actually use.
+            </p>
+          </div>
 
-          <motion.div variants={item} className="min-w-0">
-            <Card className="glass border-white/10 h-full overflow-hidden relative">
-              <CardContent className="p-7 relative">
-                <div className="text-sm text-violet-300 mb-2 flex items-center gap-2 font-mono">
-                  <Terminal className="h-4 w-4" />
-                  ~/aakriti --whoami
-                </div>
-                <pre className="text-xs md:text-sm text-zinc-200 leading-7 whitespace-pre-wrap break-words font-mono">
-                  {`{
-  "name": "Aakriti Karna",
-  "role": "Early career developer",
-  "education": "B.Tech CSE, Vel Tech (2022-2026)",
-  "experience": "Frontend Developer Intern",
-  "languages": ["Python", "Java",
-                "JavaScript", "SQL"],
-  "frontend": ["React", "Next.js"],
-  "backend": ["Node.js", "Express.js", "Django"],
-  "available": "freelance work"
-}`}
-                </pre>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </Stagger>
+          <dl className="divide-y divide-border border-y border-border">
+            {FACTS.map((f) => (
+              <div key={f.label} className="flex flex-col gap-0.5 py-3.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+                <dt className="font-medium">{f.label}</dt>
+                <dd className="text-sm text-muted-foreground">{f.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
     </section>
   )

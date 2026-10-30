@@ -7,7 +7,8 @@
         "dev:no-reload": "next dev --hostname 0.0.0.0 --port 3000",
         "build": "next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "test:email": "node --env-file=.env.local scripts/test-email.mjs"
     },
     "dependencies": {
         "@radix-ui/react-separator": "1.1.7",
@@ -18,6 +19,7 @@
         "lucide-react": "0.516.0",
         "mongodb": "6.6.0",
         "next": "15.5.16",
+        "nodemailer": "^10.2.1",
         "react": "18.3.1",
         "react-dom": "18.3.1",
         "sonner": "2.0.5",

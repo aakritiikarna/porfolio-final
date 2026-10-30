@@ -1,16 +1,8 @@
-'use client'
-
-import { Sparkles } from 'lucide-react'
-import { Reveal } from './Reveal'
-
-export default function SectionHead({ kicker, title, subtitle }) {
+export default function SectionHead({ title, subtitle }) {
   return (
-    <Reveal className="mb-10 text-center">
-      <div className="inline-flex items-center gap-2 rounded-full glass px-3 py-1 text-xs text-violet-300">
-        <Sparkles className="h-3.5 w-3.5" /> {kicker}
-      </div>
-      <h2 className="mt-3 text-3xl md:text-5xl font-bold tracking-tight font-display">{title}</h2>
-      {subtitle && <p className="mt-3 max-w-2xl mx-auto text-zinc-400">{subtitle}</p>}
-    </Reveal>
+    <div className="mb-8 max-w-2xl md:mb-10">
+      <h2 className="text-3xl font-medium tracking-tight md:text-4xl">{title}</h2>
+      {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
+    </div>
   )
 }

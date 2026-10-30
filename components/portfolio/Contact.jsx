@@ -1,165 +1,239 @@
 'use client'
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Phone, Linkedin, Github, Sparkles, Send } from 'lucide-react'
-import { toast } from 'sonner'
-import { Card, CardContent } from '@/components/ui/card'
+
+import { useEffect, useRef, useState } from 'react'
+import { Mail, Phone, Linkedin, Github, Send, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import SectionHead from './SectionHead'
-import Reveal from './Reveal'
 import { SITE } from '@/lib/site'
+import { COUNTRIES, DEFAULT_COUNTRY_ISO2 } from '@/lib/countries'
+import { validateContact, LIMITS } from '@/lib/contactSchema'
+
 function ContactRow({ icon, label, value, href }) {
-  const inner = (
-    <div className="flex items-center gap-4 group">
-      <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 grid place-items-center text-violet-300 group-hover:bg-violet-500/20 group-hover:border-violet-500/40 transition">
-        {icon}
-      </div>
-      <div>
-        <div className="text-[11px] uppercase tracking-wider text-zinc-500">{label}</div>
-        <div className="text-sm text-zinc-100 group-hover:text-violet-300 transition">{value}</div>
-      </div>
-    </div>
-  )
-  return href ? (
-    <a href={href} target="_blank" rel="noreferrer">
-      {inner}
-    </a>
-  ) : (
-    inner
+  return (
+    <li>
+      <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noreferrer" className="group flex items-center gap-4">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground transition-colors group-hover:text-primary">
+          {icon}
+        </span>
+        <span className="min-w-0">
+          <span className="block text-xs text-muted-foreground">{label}</span>
+          <span className="block truncate text-sm transition-colors group-hover:text-primary">{value}</span>
+        </span>
+      </a>
+    </li>
   )
 }
-const INITIAL_FORM = { name: '', email: '', message: '' }
+
+function Field({ id, label, optional, error, children }) {
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1.5 block text-sm font-medium">
+        {label} {optional && <span className="font-normal text-muted-foreground">(optional)</span>}
+      </label>
+      {children}
+      {error && (
+        <p id={`${id}-error`} className="mt-1.5 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// Props that connect an input to its error message for assistive tech.
+const a11y = (id, error) => (error ? { 'aria-invalid': true, 'aria-describedby': `${id}-error` } : {})
+
+const INITIAL = { name: '', email: '', subject: '', country: DEFAULT_COUNTRY_ISO2, phone: '', message: '', website: '' }
+
 export default function Contact() {
-  const [form, setForm] = useState(INITIAL_FORM)
-  const [loading, setLoading] = useState(false)
+  const [form, setForm] = useState(INITIAL)
+  const [errors, setErrors] = useState({})
+  const [status, setStatus] = useState({ type: 'idle', text: '' }) // idle | sending | success | error
+  const openedAt = useRef(0)
+
+  // Sent to the server as a basic bot check (nobody fills in the form within seconds of opening the page).
+  useEffect(() => {
+    openedAt.current = Date.now()
+  }, [])
+
+  const set = (key) => (e) => {
+    setForm((f) => ({ ...f, [key]: e.target.value }))
+    if (errors[key]) setErrors((er) => ({ ...er, [key]: undefined }))
+  }
+
   const submit = async (e) => {
     e.preventDefault()
-    if (!form.name || !form.email || !form.message) {
-      toast.error('Please fill all fields')
+    if (status.type === 'sending') return
+
+    const checked = validateContact(form)
+    if (!checked.ok) {
+      setErrors(checked.errors)
+      setStatus({ type: 'error', text: 'Please fix the highlighted fields and try again.' })
       return
     }
-    setLoading(true)
+    setErrors({})
+    setStatus({ type: 'sending', text: 'Sending your message…' })
+
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, startedAt: openedAt.current }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed')
-      toast.success('Message sent! Aakriti will reply soon.')
-      setForm(INITIAL_FORM)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Something went wrong'
-      toast.error(message)
-    } finally {
-      setLoading(false)
+      const data = await res.json().catch(() => ({}))
+      // Only a response that explicitly says ok:true means the email was actually sent.
+      if (res.ok && data.ok === true) {
+        setStatus({ type: 'success', text: `Message sent. Thank you, ${checked.value.name}. I will reply to ${checked.value.email}.` })
+        setForm(INITIAL)
+        return
+      }
+      if (data.fields) setErrors(data.fields)
+      setStatus({ type: 'error', text: data.error || 'Your message could not be sent. Please try again.' })
+    } catch {
+      setStatus({ type: 'error', text: 'Could not reach the server. Check your connection and try again.' })
     }
   }
+
+  const sending = status.type === 'sending'
+
   return (
-    <section id="contact" className="relative py-24">
-      <div className="mx-auto max-w-6xl px-4">
-        <SectionHead
-          kicker="Let's Talk"
-          title="Get In Touch"
-          subtitle="Have a role or a project in mind? Send me a message."
-        />
-        <div className="grid md:grid-cols-2 gap-8">
-          <Reveal className="min-w-0">
-            <Card className="glass border-white/10 h-full">
-              <CardContent className="p-7 space-y-5">
-                <ContactRow icon={<Mail />} label="Email" value={SITE.email} href={`mailto:${SITE.email}`} />
-                <ContactRow icon={<Phone />} label="Phone" value={SITE.phone} href={SITE.phoneHref} />
-                {SITE.linkedin && (
-                  <ContactRow
-                    icon={<Linkedin />}
-                    label="LinkedIn"
-                    value={SITE.linkedin.replace(/^https?:\/\/(www\.)?/, '')}
-                    href={SITE.linkedin}
-                  />
-                )}
-                {SITE.github && (
-                  <ContactRow
-                    icon={<Github />}
-                    label="GitHub"
-                    value={SITE.github.replace(/^https?:\/\/(www\.)?/, '')}
-                    href={SITE.github}
-                  />
-                )}
+    <section id="contact" className="py-16 md:py-24">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6">
+        <div className="grid gap-10 md:grid-cols-5 md:gap-16">
+          <div className="md:col-span-2">
+            <SectionHead title="Get in touch" subtitle="Have a role or a project in mind? Send me a message and I will reply by email." />
+            <ul className="space-y-4">
+              <ContactRow icon={<Mail className="h-4 w-4" />} label="Email" value={SITE.email} href={`mailto:${SITE.email}`} />
+              <ContactRow icon={<Phone className="h-4 w-4" />} label="Phone" value={SITE.phone} href={SITE.phoneHref} />
+              {SITE.linkedin && (
+                <ContactRow
+                  icon={<Linkedin className="h-4 w-4" />}
+                  label="LinkedIn"
+                  value={SITE.linkedin.replace(/^https?:\/\/(www\.)?/, '')}
+                  href={SITE.linkedin}
+                />
+              )}
+              {SITE.github && (
+                <ContactRow
+                  icon={<Github className="h-4 w-4" />}
+                  label="GitHub"
+                  value={SITE.github.replace(/^https?:\/\/(www\.)?/, '')}
+                  href={SITE.github}
+                />
+              )}
+            </ul>
+          </div>
 
-                <div className="rounded-xl bg-violet-500/10 border border-white/10 p-4">
-                  <div className="text-sm font-semibold flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-violet-300" /> Available for freelance work
-                  </div>
-                  <div className="text-xs text-zinc-400 mt-1">Open to development roles and freelance projects</div>
-                </div>
-              </CardContent>
-            </Card>
-          </Reveal>
+          <form onSubmit={submit} noValidate className="relative space-y-4 rounded-2xl border border-border bg-card p-6 md:col-span-3">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field id="name" label="Name" error={errors.name}>
+                <Input id="name" name="name" autoComplete="name" maxLength={LIMITS.name} value={form.name} onChange={set('name')} {...a11y('name', errors.name)} />
+              </Field>
+              <Field id="email" label="Email" error={errors.email}>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  maxLength={LIMITS.email}
+                  placeholder="you@example.com"
+                  value={form.email}
+                  onChange={set('email')}
+                  {...a11y('email', errors.email)}
+                />
+              </Field>
+            </div>
 
-          <Reveal delay={0.1} className="min-w-0">
-            <Card className="glass border-white/10 h-full">
-              <CardContent className="p-7">
-                <form onSubmit={submit} className="space-y-4">
-                  <div>
-                    <label className="text-xs text-zinc-400 mb-1.5 block">Your Name</label>
-                    <Input
-                      value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="Jane Doe"
-                      className="bg-white/5 border-white/10 focus-visible:ring-violet-500/40"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-zinc-400 mb-1.5 block">Email</label>
-                    <Input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      placeholder="you@company.com"
-                      className="bg-white/5 border-white/10 focus-visible:ring-violet-500/40"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-zinc-400 mb-1.5 block">Message</label>
-                    <Textarea
-                      rows={5}
-                      value={form.message}
-                      onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      placeholder="Tell me about the role or idea…"
-                      className="bg-white/5 border-white/10 focus-visible:ring-violet-500/40"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-violet-600 hover:bg-violet-500 text-white border-0"
-                  >
-                    <AnimatePresence mode="wait" initial={false}>
-                      <motion.span
-                        key={loading ? 'sending' : 'idle'}
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.15 }}
-                        className="inline-flex items-center"
-                      >
-                        {loading ? (
-                          'Sending…'
-                        ) : (
-                          <>
-                            Send Message <Send className="ml-2 h-4 w-4" />
-                          </>
-                        )}
-                      </motion.span>
-                    </AnimatePresence>
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </Reveal>
+            <Field id="subject" label="Subject" error={errors.subject}>
+              <Input id="subject" name="subject" maxLength={LIMITS.subject} value={form.subject} onChange={set('subject')} {...a11y('subject', errors.subject)} />
+            </Field>
+
+            {/* Country (ISO 3166-1 alpha-2) and dialing code come from lib/countries.js and are kept as separate values. */}
+            <Field id="phone" label="Phone" optional error={errors.phone}>
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,13rem)_1fr]">
+                <select
+                  id="country"
+                  name="country"
+                  aria-label="Country calling code"
+                  value={form.country}
+                  onChange={set('country')}
+                  className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {COUNTRIES.map((c) => (
+                    <option key={c.iso2} value={c.iso2}>
+                      {c.name} (+{c.dial})
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel-national"
+                  placeholder="Phone number"
+                  value={form.phone}
+                  onChange={set('phone')}
+                  {...a11y('phone', errors.phone)}
+                />
+              </div>
+            </Field>
+
+            <Field id="message" label="Message" error={errors.message}>
+              <Textarea
+                id="message"
+                name="message"
+                rows={5}
+                maxLength={LIMITS.message}
+                placeholder="Tell me about the role or idea"
+                value={form.message}
+                onChange={set('message')}
+                {...a11y('message', errors.message)}
+              />
+            </Field>
+
+            {/* Honeypot: hidden from people and assistive tech. Bots tend to fill it, and the server rejects those. */}
+            <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+              <label htmlFor="website">Leave this field empty</label>
+              <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" value={form.website} onChange={set('website')} />
+            </div>
+
+            <Button type="submit" disabled={sending} className="w-full sm:w-auto">
+              {sending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending
+                </>
+              ) : (
+                <>
+                  Send message <Send className="ml-2 h-4 w-4" />
+                </>
+              )}
+            </Button>
+
+            {/* Live region so screen readers announce the result. Success text only appears after the server confirms sending. */}
+            <div role={status.type === 'error' ? 'alert' : 'status'} aria-live="polite" className="min-h-6 text-sm">
+              {status.type === 'success' && (
+                <p className="flex items-start gap-2 text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> {status.text}
+                </p>
+              )}
+              {status.type === 'error' && (
+                <p className="flex items-start gap-2 text-destructive">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>
+                    {status.text}{' '}
+                    <a href={`mailto:${SITE.email}`} className="underline underline-offset-4">
+                      Email me directly
+                    </a>
+                  </span>
+                </p>
+              )}
+              {status.type === 'sending' && <p className="text-muted-foreground">{status.text}</p>}
+            </div>
+          </form>
         </div>
       </div>
     </section>

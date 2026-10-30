@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowRight, FileText, Menu, X } from 'lucide-react'
+import { FileText, Menu, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
+import ThemeToggle from './ThemeToggle'
 import { SITE } from '@/lib/site'
 
+// Same order as the sections on the page.
 const NAV = [
   { id: 'about', label: 'About' },
+  { id: 'projects', label: 'Projects' },
   { id: 'skills', label: 'Skills' },
   { id: 'experience', label: 'Experience' },
-  { id: 'projects', label: 'Projects' },
   { id: 'education', label: 'Education' },
   { id: 'achievements', label: 'Achievements' },
   { id: 'contact', label: 'Contact' },
@@ -23,19 +25,18 @@ export default function Navbar() {
   const [active, setActive] = useState('home')
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20)
+    const onScroll = () => setScrolled(window.scrollY > 12)
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Highlight the link of the section currently in view.
+  // Mark the link of the section currently in view. 'home' is tracked too so the mark clears at the top.
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
       { rootMargin: '-40% 0px -55% 0px' }
     )
-    // 'home' is not a nav link (the logo goes there) but is still tracked so the highlight clears at the top.
     ;['home', ...NAV.map((n) => n.id)].forEach((id) => {
       const el = document.getElementById(id)
       if (el) observer.observe(el)
@@ -44,105 +45,85 @@ export default function Navbar() {
   }, [])
 
   return (
-    <motion.header
-      initial={{ y: -40, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className={`fixed top-0 inset-x-0 z-40 transition-all duration-300 ${scrolled ? 'py-2' : 'py-4'}`}
+    <header
+      className={`fixed inset-x-0 top-0 z-40 transition-colors duration-200 ${
+        scrolled || open ? 'border-b border-border bg-background/90 backdrop-blur' : 'border-b border-transparent'
+      }`}
     >
-      <div className="mx-auto max-w-6xl px-4">
-        <div
-          className={`flex items-center justify-between rounded-2xl px-4 md:px-6 py-3 border border-transparent transition-all duration-300 ${
-            scrolled ? 'glass shadow-[0_8px_40px_-12px_rgba(139,92,246,0.3)]' : ''
-          }`}
-        >
-          <a href="#home" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-xl bg-violet-600 grid place-items-center font-black text-white shadow-lg font-display transition-transform duration-200 group-hover:scale-105">
-              AK
-            </div>
-            <span className="hidden xl:block font-semibold tracking-tight font-display">
-              Aakriti<span className="text-violet-400">.</span>
-            </span>
-          </a>
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-6">
+        <a href="#home" className="font-display text-xl font-medium tracking-tight" aria-label="Aakriti Karna, home">
+          Aakriti
+        </a>
 
-          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1">
-            {NAV.map((n) => (
-              <a
-                key={n.id}
-                href={`#${n.id}`}
-                className={`relative px-2.5 xl:px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                  active === n.id ? 'text-white' : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                {active === n.id && (
-                  <motion.span
-                    layoutId="nav-active"
-                    className="absolute inset-0 rounded-lg bg-white/10"
-                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                  />
-                )}
-                <span className="relative">{n.label}</span>
-              </a>
-            ))}
-          </nav>
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+          {NAV.map((n) => (
+            <a
+              key={n.id}
+              href={`#${n.id}`}
+              aria-current={active === n.id ? 'true' : undefined}
+              className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                active === n.id ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {n.label}
+            </a>
+          ))}
+        </nav>
 
-          <div className="hidden lg:flex items-center gap-2">
-            <a href={SITE.resume} target="_blank" rel="noreferrer">
-              <Button size="sm" variant="outline" className="border-white/15 bg-white/5 hover:bg-white/10 text-white">
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <div className="hidden lg:block">
+            <Button asChild size="sm" variant="outline">
+              <a href={SITE.resume} target="_blank" rel="noreferrer">
                 <FileText className="mr-1.5 h-4 w-4" /> Resume
-              </Button>
-            </a>
-            <a href="#contact">
-              <Button size="sm" className="bg-violet-600 hover:bg-violet-500 text-white border-0">
-                Hire Me <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Button>
-            </a>
+              </a>
+            </Button>
           </div>
-
           <button
             onClick={() => setOpen(!open)}
-            className="lg:hidden p-2 rounded-lg hover:bg-white/5 transition-colors"
+            className="rounded-lg p-2 transition-colors hover:bg-secondary lg:hidden"
             aria-label="Toggle menu"
             aria-expanded={open}
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
-
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="lg:hidden mt-2 glass rounded-2xl p-3"
-            >
-              {NAV.map((n) => (
-                <a
-                  key={n.id}
-                  href={`#${n.id}`}
-                  onClick={() => setOpen(false)}
-                  className={`block px-3 py-2 text-sm rounded-lg transition-colors hover:bg-white/5 ${
-                    active === n.id ? 'text-white bg-white/10' : 'text-zinc-300'
-                  }`}
-                >
-                  {n.label}
-                </a>
-              ))}
-              <a
-                href={SITE.resume}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => setOpen(false)}
-                className="block px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 rounded-lg transition-colors"
-              >
-                Resume
-              </a>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
-    </motion.header>
+
+      <AnimatePresence>
+        {open && (
+          <motion.nav
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15 }}
+            className="mx-auto max-w-6xl px-5 pb-3 sm:px-6 lg:hidden"
+            aria-label="Mobile"
+          >
+            {NAV.map((n) => (
+              <a
+                key={n.id}
+                href={`#${n.id}`}
+                onClick={() => setOpen(false)}
+                className={`block rounded-lg px-3 py-2.5 text-sm ${
+                  active === n.id ? 'bg-secondary text-foreground' : 'text-muted-foreground'
+                }`}
+              >
+                {n.label}
+              </a>
+            ))}
+            <a
+              href={SITE.resume}
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setOpen(false)}
+              className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground"
+            >
+              Resume
+            </a>
+          </motion.nav>
+        )}
+      </AnimatePresence>
+    </header>
   )
 }

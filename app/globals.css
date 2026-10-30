@@ -2,126 +2,110 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  Palette (one accent, everything else neutral):
+    paper   #F6F7F9   page background
+    card    #FFFFFF   surfaces
+    ink     #141821   text
+    muted   #596071   secondary text
+    line    #E2E5EB   hairline borders
+    accent  #2D44C9   links, primary buttons (picked to sit with the navy/blue project artwork)
+*/
 @layer base {
   :root {
-    --background: 240 30% 6%;
-    --foreground: 0 0% 98%;
-    --card: 240 25% 9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 25% 9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 262 83% 62%;
+    --background: 220 20% 97%;
+    --foreground: 222 25% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 25% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 25% 10%;
+    --primary: 230 63% 48%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 20% 14%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 15% 16%;
-    --muted-foreground: 240 10% 70%;
-    --accent: 262 70% 55%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 70% 55%;
+    --secondary: 228 40% 94%;
+    --secondary-foreground: 230 45% 28%;
+    --muted: 220 16% 94%;
+    --muted-foreground: 223 13% 38%;
+    --accent: 228 40% 94%;
+    --accent-foreground: 222 25% 10%;
+    --destructive: 0 65% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 20% 18%;
-    --input: 240 20% 18%;
-    --ring: 262 83% 62%;
+    --border: 220 16% 89%;
+    --input: 220 14% 82%;
+    --ring: 230 63% 48%;
     --radius: 0.75rem;
+    color-scheme: light;
   }
-  html { scroll-behavior: smooth; }
-  section[id] { scroll-margin-top: 5rem; }
-  body { font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system, sans-serif; }
-  h1, h2, h3, h4, h5, h6 { font-family: var(--font-display), ui-sans-serif, sans-serif; }
+
+  /*
+    Dark palette (same single accent, lifted to a lighter blue so it reads on dark surfaces):
+      bg      #101219   page background (a blue-tinted charcoal, not pure black)
+      card    #161922   surfaces, one step above the page
+      text    #EDEFF3 / muted #A4ABB8
+      line    subtle blue-grey hairlines
+    All text pairings are WCAG AA or better (checked: body 15:1, muted 7.5:1, links 6.6:1).
+    Toggled by the "dark" class on <html> (see components/portfolio/ThemeToggle.jsx).
+  */
+  .dark {
+    --background: 225 22% 8%;
+    --foreground: 220 20% 93%;
+    --card: 225 20% 11%;
+    --card-foreground: 220 20% 93%;
+    --popover: 225 20% 11%;
+    --popover-foreground: 220 20% 93%;
+    --primary: 227 90% 74%;
+    --primary-foreground: 225 30% 9%;
+    --secondary: 227 25% 18%;
+    --secondary-foreground: 227 80% 88%;
+    --muted: 225 16% 15%;
+    --muted-foreground: 220 12% 68%;
+    --accent: 227 25% 18%;
+    --accent-foreground: 220 20% 93%;
+    --destructive: 0 84% 67%;
+    --destructive-foreground: 225 30% 9%;
+    --border: 225 14% 19%;
+    --input: 225 12% 33%;
+    --ring: 227 90% 74%;
+    color-scheme: dark; /* native controls (select dropdown, scrollbars) follow the theme */
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+  section[id] {
+    scroll-margin-top: 4.5rem;
+  }
+  body {
+    font-family: var(--font-body), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display), Georgia, 'Times New Roman', serif;
+    letter-spacing: -0.01em;
+  }
 }
 
-/* Custom utilities */
-.gradient-text {
-  background: linear-gradient(110deg, #c4b5fd 0%, #a5b4fc 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/*
+  Smooth theme switch. The toggle adds .theme-transition to <html> for a moment, so colors fade
+  without slowing down normal hover/focus transitions the rest of the time. The toggle's own icons
+  are excluded so their rotate/scale animation keeps working.
+*/
+html.theme-transition,
+html.theme-transition *:not([data-theme-icon]),
+html.theme-transition *:not([data-theme-icon])::before,
+html.theme-transition *:not([data-theme-icon])::after {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, fill 0.3s ease, stroke 0.3s ease !important;
 }
 
-.glass {
-  background: rgba(20, 16, 45, 0.45);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(168, 85, 247, 0.18);
+::selection {
+  background: hsl(var(--primary) / 0.18);
 }
 
-.glow-border {
-  position: relative;
-}
-.glow-border::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, rgba(167,139,250,0.5), rgba(129,140,248,0.3));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* Animated grid */
-.bg-grid {
-  background-image:
-    linear-gradient(rgba(168,85,247,0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(168,85,247,0.08) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
-  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
-}
-
-/* Blob animations */
-@keyframes blob {
-  0%, 100% { transform: translate(0,0) scale(1); }
-  33% { transform: translate(40px,-30px) scale(1.1); }
-  66% { transform: translate(-30px,30px) scale(0.95); }
-}
-.animate-blob { animation: blob 18s ease-in-out infinite; }
-
-/* Very slow background drift (desktop only) */
-@keyframes drift {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-46%) translateY(18px); }
-}
-.animate-drift { animation: drift 40s ease-in-out infinite; }
-@media (max-width: 767px) { .animate-drift { animation: none; } }
-
-/* Floating */
-@keyframes float-y {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-}
-.animate-float { animation: float-y 5s ease-in-out infinite; }
-
-/* Typewriter caret */
-@keyframes caret { 50% { opacity: 0; } }
-.caret { animation: caret 1s steps(1) infinite; }
-
-/* Marquee for skills */
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-.animate-marquee { animation: marquee 30s linear infinite; }
-
-/* Aurora */
-.aurora {
-  background: conic-gradient(from 180deg at 50% 50%, #7c3aed 0deg, #06b6d4 90deg, #ec4899 180deg, #f59e0b 270deg, #7c3aed 360deg);
-  filter: blur(80px);
-  opacity: 0.35;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: #0a0820; }
-::-webkit-scrollbar-thumb { background: #3b2a78; border-radius: 6px; }
-
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  .animate-blob, .animate-float, .animate-marquee, .animate-drift, .caret, .gradient-text {
-    animation: none !important;
+  html {
+    scroll-behavior: auto;
   }
-  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

@@ -15,9 +15,8 @@ module.exports = {
     },
     extend: {
       fontFamily: {
-        display: ['var(--font-display)', 'sans-serif'],
+        display: ['var(--font-display)', 'Georgia', 'serif'],
         sans: ['var(--font-body)', 'sans-serif'],
-        mono: ['var(--font-mono)', 'monospace'],
       },
       colors: {
         border: 'hsl(var(--border))',
